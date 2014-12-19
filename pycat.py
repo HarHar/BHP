@@ -99,10 +99,10 @@ def client_sender(buffer):
         if len(buffer):
             client.send(buffer)
 
-while True:
-        # now wait for data back
-        recv_len = 1
-        response = ""
+            while True:
+            # now wait for data back
+                recv_len = 1
+                response = ""
 # receive data until there's no more data to receive
         while recv_len:
 
