@@ -122,12 +122,12 @@ def client_sender(buffer):
         # send it off
         client.send(buffer)
 
-except:
+    except:
 
-    print "[*] Exception! Exiting."
+        print "[*] Exception! Exiting."
 
-    # tear down the connection
-    client.close()
+        # tear down the connection
+        client.close()
 
 # Create our primary server loop and a stub function that will handle both command execution and shell
 def server_loop():
