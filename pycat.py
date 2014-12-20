@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 # Create a simple netcat replacement via Python
 import sys
 import socket
@@ -71,31 +72,16 @@ def main():
             port = int(a)
         else:
             assert False,"Unhandled Option"
-
-# Are we going to listen or just send data from stdin?
-# Mimic netcat to read data from stdin and send it across the network
-if not listen and len(target) and port > 0:
-
-        # read in the buffer from the commandline
-        # this will block, so send CTRL-D if not sending input to stdin
-        buffer = sys.stdin.read()
-
-        # send data off
-        client_sender(buffer)
-
-# we are going to listen and potentially upload things, execute commands,
-# and drop a shell back depending on our command line options above
-if listen:
-    server_loop()    # detect that we are to set up a listening socket and process further commands
+main()
 
 def client_sender(buffer):
-# Setup TCP socket object
+    # Setup TCP socket object
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
         # connect to our target host
         client.connect((target,port))
-# test if we have received any input from stdin. If all is well, send data to remote remote target
+        # test if we have received any input from stdin. If all is well, send data to remote remote target
         if len(buffer):
             client.send(buffer)
 
@@ -103,7 +89,7 @@ def client_sender(buffer):
             # now wait for data back
                 recv_len = 1
                 response = ""
-# receive data until there's no more data to receive
+        # receive data until there's no more data to receive
         while recv_len:
 
             data     = client.recv(4096)
@@ -148,18 +134,15 @@ def server_loop():
         client_thread = threading.Thread(target=client_handler,args=(client_socket,))
         client_thread.start()
 
-
-
 def run_command(command):
-
     # trim the newline
     command = command.rstrip()
 
     # run the command and get the output back
     try:
-# subprocess provides powerful process-creation interface to start and interact with client programs
-# in this case, we run whatever command we pass in, running it on local OS, and return output from command
-# back to the client that is connected to us.
+        # subprocess provides powerful process-creation interface to start and interact with client programs
+        # in this case, we run whatever command we pass in, running it on local OS, and return output from command
+        # back to the client that is connected to us.
         output = subprocess.check_output(command,stderr=subprocess.STDOUT, shell=True)
     except:
         output = "Failed to execute command.\r\n" # exception handling will catch generic errors and return error message
@@ -175,6 +158,7 @@ def client_handler(client_socket):
     # responsible for determining whether our network tool is set to receive a file when it receives a connection
     # useful for upload/execute or installing malware and having the malware remove our Python callback
     # check for upload
+    file_buffer = ""
     if len(upload_destination):
         # read in all of the bytes and write to our destination
         file_buffer = ""
@@ -191,8 +175,8 @@ def client_handler(client_socket):
 
     # now we take these bytes and try to write them out
     try:
-# the wb flag ensures that we are writing the file with binary mode enabled,
-# which ensures that uplodaing and writing a binary executable will be successful.
+        # the wb flag ensures that we are writing the file with binary mode enabled,
+        # which ensures that uplodaing and writing a binary executable will be successful.
         file_descriptor = open(upload_destination,"wb")
         file_descriptor.write(file_buffer)
         file_descriptor.close()
@@ -202,13 +186,25 @@ def client_handler(client_socket):
     except:
         client_socket.send("Failed to save file to %s\r\n" % upload_destination)
 
+# Are we going to listen or just send data from stdin?
+# Mimic netcat to read data from stdin and send it across the network
+if not listen and len(target) and port > 0:
+    # read in the buffer from the commandline
+    # this will block, so send CTRL-D if not sending input to stdin
+    buffer = sys.stdin.read()
 
+    # send data off
+    client_sender(buffer)
+
+# we are going to listen and potentially upload things, execute commands,
+# and drop a shell back depending on our command line options above
+if listen:
+    server_loop()    # detect that we are to set up a listening socket and process further commands
 
 # Check for command execution
 if len(execute):
     # run the command
     output = run_command(execute)
-
     client_socket.send(output)
 
 
@@ -230,7 +226,3 @@ if command:
 
         # send back the response
         client_socket.send(response)
-
-
-main()
-
